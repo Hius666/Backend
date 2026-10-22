@@ -1,0 +1,148 @@
+Ngày kiểm tra: 22/10/2026
+SDK: .NET 10.0.301, Windows x64
+Solution được kiểm tra lại sau đổi tên: DoanTrungHieu_2380600643.slnx
+
+Lệnh: scripts/Check.ps1 -UseLocalCache
+Restore: thành công từ NuGet cache của máy.
+Build API + Contracts + Checks: thành công, 0 warning, 0 error.
+Kết quả: 70 checks passed; 56 HTTP requests.
+
+Phạm vi:
+- 13 file C# MAUI: kiểm tra cú pháp Roslyn (không phải build Android).
+- GPS Haversine, quy tắc chuyên cần.
+- Azure Face adapter: HTTP response mô phỏng, kiểm tra create/train/verify/delete và ngưỡng confidence.
+- HTTP API thật với middleware auth/authorization, database SQLite riêng cho test.
+- Đăng ký/OTP/password, quyền admin/giảng viên/sinh viên.
+- CRUD lớp/enrollment/session, QR giả/hết hạn, GPS giả/cũ/kém chính xác/ngoài phạm vi.
+- Điểm danh trùng, khóa sửa/xóa dữ liệu đã điểm danh, CSV, đóng buổi, thu hồi token.
+
+Không được xác minh thực tế:
+- SMTP gửi email ra ngoài.
+- Azure resource, quyền nhận diện, độ chính xác nhận diện và camera thực.
+- SQL Server: không kết nối được bằng sqlcmd hoặc SqlClient trong môi trường hiện tại.
+- MAUI Android: build trả NETSDK1147 do thiếu maui-android workload.
+- Giao diện/camera/GPS trên thiết bị Android thật.
+
+Database schema.sql được sinh từ EF Core SQL Server provider bằng --sql.
+SQLite chỉ thuộc project kiểm tra; API chính dùng SQL Server.
+
+Cập nhật sau khi người dùng cài workload Visual Studio (22/10/2026):
+- Build Android Debug thành công, 0 warning/0 error.
+- Đã cài signed APK vào emulator-5554 (Pixel_7, Android 17/API 37, x86_64).
+- Đã mở app và xác nhận UI hierarchy có màn hình tên đăng nhập, mật khẩu và nút OTP.
+- Mục thiếu maui-android ở trên là trạng thái trước khi cài workload, hiện đã được giải quyết.
+- Build trong sandbox sử dụng AppSettingsDirectory trong artifacts/android-debug và EmbedAssembliesIntoApk=true.
+- Chưa xác minh luồng có tài khoản, SQL Server, SMTP, Azure Face, camera và GPS trên thiết bị.
+
+Cập nhật công cụ cấu hình SQL/API:
+- Đã thêm Setup-Local.ps1, Read-Otp.ps1 và hai file CMD để chạy bằng nhấp đúp.
+- Đã thêm CLI --check-db, --check-admin, --initialize và endpoint /health/ready.
+- 72 kiểm tra vượt qua, gồm readiness khi có/không có admin hoạt động.
+- PowerShell Parser xác nhận cú pháp hai script hợp lệ.
+- Build API/Checks thành công, có 5 cảnh báo audit NU1902/NU1903 về dependency Pkcs 9.0.4 và SQLite test 2.1.11; không phải lỗi biên dịch.
+- SQL từ môi trường trợ lý trả Cannot generate SSPI context. Chưa tạo database hoặc admin thực tế; cần chạy Chay-API.cmd trong Windows của người dùng.
+
+Cập nhật sau khi người dùng khởi tạo SQL/API và yêu cầu kiểm tra phân quyền:
+- API /health/ready đang ready; các thao tác qua API đang đọc/ghi SQL Server thành công.
+- Tài khoản nguyenmanhhung có Role=Lecturer, sinhvien0643 có Role=Student, đều hoạt động và đăng nhập OTP được.
+- Đã kiểm tra trực tiếp API: cả hai truy cập danh sách lớp theo quyền được, truy cập /api/users bị từ chối HTTP 403.
+- Đã thêm nút Đăng xuất ở toolbar trang chủ và thẻ hồ sơ; xóa phiên cục bộ cả khi không xác nhận được thu hồi ở server.
+- Android build thành công 0 warning/0 error. Đã cập nhật APK trên emulator, giữ dữ liệu ứng dụng.
+- Đã kiểm tra trực tiếp Android: admin có nút Đăng xuất; giảng viên có Lớp phụ trách; sinh viên có Quét QR; cả hai không có Quản lý tài khoản.
+- Đã thử logout bằng toolbar trên ba vai trò. Khởi động lại sau logout vẫn ở màn hình đăng nhập.
+- Bộ kiểm tra tự động hiện có 73 kiểm tra vượt qua (thêm file C# SessionActions vào kiểm tra cú pháp).
+- Chưa thử tình huống mất mạng trên thiết bị; nhánh logout cục bộ có xử lý timeout 5 giây trong mã.
+
+Cập nhật đăng nhập Google:
+- Đã thêm OAuth 2.0 code flow + PKCE ở API và WebAuthenticator ở app Android.
+- Android build thành công 0 warning/0 error, đã cập nhật APK lên Pixel 7 bằng cùng chứng chỉ debug hiện tại.
+- Đã xác nhận nút Đăng nhập bằng Google hiển thị và hệ điều hành resolve đúng GoogleCallbackActivity.
+- 100 kiểm tra vượt qua, gồm OAuth handler, correlation/state, PKCE, mã app một lần, verified email, liên kết sau OTP và giữ vai trò.
+- Google token/userinfo endpoint được mô phỏng trong test; không thực hiện đăng nhập tài khoản Google thật.
+- API/Checks build thành công; vẫn có các cảnh báo audit dependency đã ghi ở trên, không có lỗi C#.
+- Có Configure-Google.ps1 và Cau-hinh-Google.cmd để nhập Web Client ID/secret cục bộ; không có Google secret trong source.
+- Script Setup-Local bổ sung ExternalIdentities theo cách thêm bảng; schema.sql đã cập nhật. Chưa chạy nâng cấp trên SQL thật của người dùng.
+- Chưa cấu hình Web application Client ID/secret: cần tạo Web client với callback http://localhost:5243/signin-google rồi khởi động lại API.
+- Gmail API gửi OTP chưa được triển khai; chế độ gửi OTP hiện có được giữ nguyên.
+
+Cập nhật kiểm tra email OTP admin:
+- Đọc cấu hình thực tế: Mode=Pickup, chưa có SMTP host/user/password. Không có email thật được gửi từ môi trường trợ lý.
+- Đã sửa ChallengeResponse để phân biệt Pickup/Email; app không còn dùng tiêu đề hộp thư thật khi API báo Pickup.
+- SMTP có cancellation timeout 20 giây và thông báo lỗi cấu hình/gửi thư; chỉ báo server SMTP chấp nhận sau khi SendMailAsync thành công.
+- Đã thêm /api/auth/mail/status, không trả địa chỉ SMTP user hoặc mật khẩu.
+- Đã thêm Cau-hinh-Email.cmd và Test-OTP-Admin.cmd. App Password và mật khẩu admin được hỏi ẩn trên máy; script kiểm tra không ghi mật khẩu admin xuống file.
+- Script kiểm tra admin dừng trước khi hỏi mật khẩu/gửi thư nếu API cũ hoặc chưa bật SMTP. Đã kiểm tra nhánh dừng này với API đang chạy.
+- 104 kiểm tra tự động vượt qua, gồm admin OTP phân biệt đúng Pickup. Email sender trong bộ kiểm tra là dịch vụ mô phỏng.
+- API/Checks build thành công (còn cảnh báo audit đã ghi trước); Android build 0 warning/0 error.
+- Chưa kiểm tra gửi SMTP hoặc đăng nhập admin thực tế: chưa có quyền SMTP và mật khẩu admin từ người dùng. Không reset mật khẩu hay sửa tài khoản admin.
+
+2026-10-23 - Doi chieu email nhan OTP dang ky
+- 108 checks passed, 70 HTTP requests.
+- SMTP loopback capture: From = configured sender; only RCPT TO = registration email; no admin copy.
+- ChallengeResponse and OTP page now show RecipientEmail.
+- Android build succeeded: 0 warnings, 0 errors.
+- Configure-Mail.ps1 and Test-AdminOtp.ps1 syntax verified.
+- No external email sent by this test. API and emulator were offline; actual inbox delivery not verified.
+
+2026-10-23 - QR scanner and five-minute expiry
+- 110 checks passed, 70 HTTP requests, including five-minute QR expiry and protected ticket matching the displayed expiry.
+- Camera initialization moved after permission grant; QR-only TryHarder/TryInverted and resolution selection enabled; scan/GPS/API progress and camera restart added.
+- Lecturer QR scales to available screen width.
+- No physical camera or real GPS check performed: adb devices list empty.
+
+2026-10-23 - Alternative QR image input for overexposed webcam
+- Added image picker with local Android bitmap decode, 16 MB input cap and sampling to maximum 2000 px side.
+- Shared camera/image attendance submission; camera paused during image selection; GPS and server rules unchanged.
+- Standalone smoke checks link production QrImageDecoder: dense QR, inverted, rotated, blank image rejection all passed (4).
+- Device camera/image picker not verified because no device attached.
+
+2026-10-23 - Download lecturer QR for switching roles
+- Added lecturer QR-page download button and logout toolbar action.
+- Export uses the current QR payload as a 1024x1024 PNG with a four-module quiet zone.
+- Saves to shared Download/DiemDanh0643 via MediaStore Downloads on Android 10+; legacy Android 8/9 requests storage write permission limited to API 28.
+- Pending MediaStore rows and partial legacy files are removed if writing fails. Expired QR is rejected before saving.
+- 115 API checks passed / 74 HTTP requests, including revoking issuing lecturer session and successfully using the same QR as a student.
+- 4 production encoder/decoder roundtrip checks passed.
+- No attached adb device; MediaStore save/FilePicker flow not yet verified on a device.
+
+2026-10-23 - SMTP failure handling and App + API debug profile
+- 121 checks passed / 76 HTTP requests. Loopback SMTP rejection cases 535/550 return handled 503 with status and guidance, without credential output; failed challenges are removed for retry.
+- SMTP cause preserved as InnerException; safe status/type logged without raw server transcript.
+- App + API profile now starts API without debugger, while Android remains under debugger.
+- Current configuration shape verified only; no external email sent and no successful Gmail authentication confirmed. Running localhost API health check timed out while Visual Studio appeared paused.
+
+2026-10-23 - SMTP stage diagnostics for repeated student login failure
+- Added Kiem-tra-SMTP.cmd / standalone .NET 10 SmtpCheck tool. Checks TCP, STARTTLS, TLS and AUTH; never sends message commands or exposes credentials.
+- Tool built and executed: TCP succeeded; tool-environment TLS failed with AuthenticationException -> Win32Exception 0x8009030E (restricted Windows credential context). Authentication and email sending were NOT reached. User Visual Studio environment remains to be compared.
+- Nested IOException/authentication/socket/Win32 failures now classified using the complete inner-exception chain. Server logs safe type names/native codes, not raw SMTP transcript or secrets.
+- 124 API checks passed, 76 HTTP requests; includes nested TLS/socket/Windows-context regression cases.
+
+2026-10-23 - Explicit SMTP timeout handling after screenshot of original exception
+- Screenshot revealed SmtpException: The operation has timed out. This is not proof of an invalid App Password.
+- Classifies direct/nested timeouts and cancellation surfaced as SmtpException; retains the existing 20-second limit.
+- Expected OTP delivery failures are caught in the auth controller and returned as 503 after failed challenge cleanup; Google linking runs only after successful challenge delivery.
+- 126 checks passed, 76 HTTP requests. External Gmail delivery remains unverified.
+
+2026-10-23 - Azure Face setup tooling
+- Confirmed local configuration has no Face Endpoint/Key (no secrets printed).
+- Added Cau-hinh-Face.cmd and Configure-Face.ps1 with masked key input, public Azure HTTPS endpoint validation, preserving existing groups and other configuration.
+- Optional CheckOnly and read-only PersonGroups probe; no photo submission or enrollment during setup check.
+- PowerShell syntax and endpoint validation checks passed. CheckOnly correctly reports missing configuration and exits before network calls.
+- No external Azure resource or permission was provisioned, no biometric data sent. Real Face login remains dependent on approved Azure resource and user-provided Endpoint/Key.
+
+2026-10-23 - Face readiness and enrollment prerequisites
+- Local Face Endpoint/Key still absent. No adb devices attached.
+- Added non-secret service configuration status; authenticated callers can see only their own enrollment status.
+- Mobile checks configuration before camera capture for face signup/login.
+- Missing service returns 503; unenrolled/unverified account returns enrollment/email instructions without incrementing login failure counters. Actual mismatch still uses failure counting with a specific message.
+- 138 checks passed / 86 HTTP requests, including six consecutive unenrolled login attempts without lockout, no matching call on missing configuration, and enrollment status transition.
+- Azure biometric calls remain mocked in tests; no claim of successful real camera or Azure verification.
+
+2026-10-23 - Implement local face login without Azure approval
+- Added selectable Local provider using Python OpenCV YuNet + SFace; routed enroll/verify/delete by provider-specific template IDs.
+- Local templates use ASP.NET Data Protection, no source-photo persistence; cosine threshold 0.45, checks finite 128-D vectors and rejects invalid IDs/path traversal. Worker limits one face, rejects small faces, bounds image pixels and execution time/concurrency.
+- Added Cai-Face-Local.cmd / Setup-LocalFace.ps1: isolated runtime and cache in workspace, pinned OpenCV wheel, official model downloads with SHA-256 and licenses, model forward self-check before writing Local configuration.
+- Updated consent for Local/Azure and clarified enrollment is immediate after OTP, not a ten-minute wait.
+- 146 checks passed / 86 HTTP requests, including local protected template persistence/reload/mismatch/delete and existing auth/Google/mail/QR/role/GPS tests. Feature extraction was substituted in automated Local service tests.
+- Python/PowerShell syntax checked. Android full build succeeded with 0 warnings/errors in artifacts/face-validation; normal output was held open by another process, so no user process was terminated.
+- Tool environment has PIP_NO_INDEX and a refusing network proxy; OpenCV/model dependencies could not be installed by the agent. No claim of real-image inference or camera verification. User must run the installer from normal Windows; it enables Local only after successful engine self-check.

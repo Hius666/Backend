@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "DoanTrungHieu_2380600643.Api": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "launchUrl": "health",
+      "applicationUrl": "http://localhost:5243",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  }
+}

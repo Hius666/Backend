@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><UserSecretsId>dthieu-0643-api</UserSecretsId></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../DoanTrungHieu_2380600643.Contracts/DoanTrungHieu_2380600643.Contracts.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
+  </ItemGroup>
+</Project>

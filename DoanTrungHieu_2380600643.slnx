@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/DoanTrungHieu_2380600643.Api/DoanTrungHieu_2380600643.Api.csproj" />
+  <Project Path="src/DoanTrungHieu_2380600643.Contracts/DoanTrungHieu_2380600643.Contracts.csproj" />
+  <Project Path="tests/DoanTrungHieu_2380600643.Checks/DoanTrungHieu_2380600643.Checks.csproj" />
+</Solution>
